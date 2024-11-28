@@ -7,19 +7,28 @@ const writeFile = async (filePath: string, content: string): Promise<void> => {
 	console.log(`✅ Created: ${filePath}`);
 };
 
+const calculateRelativePath = (from: string, to: string): string => {
+	const relativePath = path.relative(path.dirname(from), to);
+	return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+};
+
 const generateStaticRoute = async (name: string): Promise<void> => {
-	const routePath = path.join('src', 'routes', `${name}Route.ts`);
-	const htmlFilePath = path.join('public', `${name}.html`);
+	const folderPath = path.dirname(name);
+	const routeName = path.basename(name);
+
+	const routePath = path.join('src', 'routes', folderPath, `${routeName}Route.ts`);
+	const htmlFilePath = path.join('public', folderPath, `${routeName}.html`);
+	const relativeHtmlPath = calculateRelativePath(routePath, htmlFilePath);
 
 	const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${name}</title>
+  <title>${routeName}</title>
 </head>
 <body>
-  <h1>Welcome to the ${name} page!</h1>
+  <h1>Welcome to the ${routeName} page!</h1>
 </body>
 </html>`;
 	await writeFile(htmlFilePath, htmlContent);
@@ -30,7 +39,7 @@ import path from 'path';
 const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-  const htmlPath = path.join(__dirname, '../../public/${name}.html');
+  const htmlPath = path.join(__dirname, '${relativeHtmlPath}');
   res.sendFile(htmlPath);
 });
 
@@ -38,13 +47,26 @@ export default router;`;
 	await writeFile(routePath, routeContent);
 };
 
-const generateRestRoute = async (model: string): Promise<void> => {
-	const routePath = path.join('src', 'routes', `${model}Route.ts`);
+const generateRestRoute = async (name: string): Promise<void> => {
+	const folderPath = path.dirname(name);
+	const routeName = path.basename(name);
+
+	const routePath = path.join('src', 'routes', folderPath, `${routeName}Route.ts`);
+	const controllerPath = calculateRelativePath(
+		routePath,
+		path.join('src', 'controllers', `${folderPath}`, `${routeName}Controller.ts`)
+	);
+	const validationMiddlewarePath = calculateRelativePath(
+		routePath,
+		path.join('src', 'middleware', 'validationMiddleware.ts')
+	);
+	const validationStringPath = calculateRelativePath(routePath, path.join('src', 'validations', 'string.ts'));
+
 	const content = `import Joi from 'joi';
 import { Router } from 'express';
-import { getAll, getOne, create, update, remove } from '../controllers/${model}Controller';
-import validate from '../middleware/validationMiddleware';
-import validateString from '../validations/string';
+import { getAll, getOne, create, update, remove } from '${controllerPath}';
+import validate from '${validationMiddlewarePath}';
+import validateString from '${validationStringPath}';
 
 const router = Router();
 
@@ -58,14 +80,18 @@ export default router;`;
 	await writeFile(routePath, content);
 };
 
-const generateController = async (model: string): Promise<void> => {
-	const controllerPath = path.join('src', 'controllers', `${model}Controller.ts`);
+const generateController = async (name: string): Promise<void> => {
+	const folderPath = path.dirname(name);
+	const controllerName = path.basename(name);
+
+	const controllerPath = path.join('src', 'controllers', folderPath, `${controllerName}Controller.ts`);
+	const modelPath = calculateRelativePath(controllerPath, path.join('src', 'models', `${controllerName}Model.ts`));
 	const content = `import { Request, Response } from 'express';
-import ${model} from '../models/${model}Model';
+import ${controllerName} from '${modelPath}';
 
 export const getAll = async (req: Request, res: Response): Promise<void> => {
   try {
-    const items = await ${model}.find();
+    const items = await ${controllerName}.find();
     res.status(200).json(items);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -74,7 +100,7 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
 
 export const getOne = async (req: Request, res: Response): Promise<void> => {
   try {
-    const item = await ${model}.findById(req.params.id);
+    const item = await ${controllerName}.findById(req.params.id);
     if (!item) {
       res.status(404).json({ error: 'Item not found' });
       return;
@@ -87,7 +113,7 @@ export const getOne = async (req: Request, res: Response): Promise<void> => {
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    const item = new ${model}(req.body);
+    const item = new ${controllerName}(req.body);
     await item.save();
     res.status(201).json(item);
   } catch (error) {
@@ -97,7 +123,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 
 export const update = async (req: Request, res: Response): Promise<void> => {
   try {
-    const item = await ${model}.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const item = await ${controllerName}.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!item) {
       res.status(404).json({ error: 'Item not found' });
       return;
@@ -110,7 +136,7 @@ export const update = async (req: Request, res: Response): Promise<void> => {
 
 export const remove = async (req: Request, res: Response): Promise<void> => {
   try {
-    const item = await ${model}.findByIdAndDelete(req.params.id);
+    const item = await ${controllerName}.findByIdAndDelete(req.params.id);
     if (!item) {
       res.status(404).json({ error: 'Item not found' });
       return;
@@ -123,17 +149,18 @@ export const remove = async (req: Request, res: Response): Promise<void> => {
 	await writeFile(controllerPath, content);
 };
 
-const generateModel = async (model: string): Promise<void> => {
-	const modelPath = path.join('src', 'models', `${model}Model.ts`);
+const generateModel = async (name: string): Promise<void> => {
+	const modelName = path.basename(name);
+	const modelPath = path.join('src', 'models', `${modelName}Model.ts`);
 	const content = `import mongoose, { Schema, Document } from 'mongoose';
 
-export interface I${model} extends Document {
+export interface I${modelName} extends Document {
   _id: string;
   name: string;
   createdAt: Date;
 }
 
-const ${model}Schema: Schema = new Schema(
+const ${modelName}Schema: Schema = new Schema(
   {
     _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
     name: { type: String, required: true },
@@ -142,7 +169,7 @@ const ${model}Schema: Schema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model<I${model}>('${model}', ${model}Schema);`;
+export default mongoose.model<I${modelName}>('${modelName}', ${modelName}Schema);`;
 	await writeFile(modelPath, content);
 };
 
@@ -156,26 +183,20 @@ const main = async (): Promise<void> => {
 		},
 	]);
 
+	const { name } = await inquirer.prompt([
+		{
+			type: 'input',
+			name: 'name',
+			message: 'Enter route name (path/to/route):',
+		},
+	]);
+
 	if (type === 'Static Route') {
-		const { name } = await inquirer.prompt([
-			{
-				type: 'input',
-				name: 'name',
-				message: 'Enter the name of the route:',
-			},
-		]);
 		await generateStaticRoute(name);
 	} else if (type === 'REST Route') {
-		const { model } = await inquirer.prompt([
-			{
-				type: 'input',
-				name: 'model',
-				message: 'Enter the name of the model (PascalCase):',
-			},
-		]);
-		await generateModel(model);
-		await generateController(model);
-		await generateRestRoute(model);
+		await generateModel(name);
+		await generateController(name);
+		await generateRestRoute(name);
 	}
 };
 

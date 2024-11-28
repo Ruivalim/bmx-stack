@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import compression from 'compression';
+import routesLoader from './routesLoader';
 
 dotenv.config();
 
@@ -21,14 +22,6 @@ app.use(compression());
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-const routesPath = path.join(__dirname, 'routes');
-fs.readdirSync(routesPath).forEach(file => {
-	if (file.endsWith('Route.ts') || file.endsWith('Route.js')) {
-		const route = require(path.join(routesPath, file));
-		const routeName = `/${file.replace(/Route\.(ts|js)$/, '').toLowerCase()}`;
-		app.use(routeName, route.default);
-		console.log(`✅ Route loaded: ${routeName}`);
-	}
-});
+routesLoader(app, path.join(__dirname, './routes'));
 
 export default app;
