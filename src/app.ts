@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import compression from 'compression';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
+app.use(compression());
 
 app.use(express.static(path.join(__dirname, '../public')));
 
