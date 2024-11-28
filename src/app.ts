@@ -1,6 +1,5 @@
 import express, { Application } from 'express';
 import dotenv from 'dotenv';
-import fs from 'fs';
 import path from 'path';
 import morgan from 'morgan';
 import helmet from 'helmet';

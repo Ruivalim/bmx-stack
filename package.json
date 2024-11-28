@@ -15,8 +15,11 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/joi": "^17.2.3",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^22.10.1",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
