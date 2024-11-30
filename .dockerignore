@@ -1,3 +1,5 @@
 node_modules
-.env
 dist
+docker-compose.yaml
+Dockerfile
+.dockerignore

@@ -1,14 +1,21 @@
-FROM oven/bun:latest
+FROM oven/bun:latest AS builder
 
 WORKDIR /usr/src/app
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lockb .env ./
 
-RUN bun install
+RUN bun install --frozen-lockfile
+
+RUN bun install -g minify
 
 COPY . .
 
-EXPOSE 5000
+RUN bun run build
 
-CMD ["bun", "src/server.ts"]
+FROM ubuntu:latest AS runner
 
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/dist .
+
+CMD [ "./server" ]

@@ -227,3 +227,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,node,deno
 mongo-data/
+src/compiledRoutes.ts

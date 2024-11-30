@@ -4,17 +4,22 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dev.Dockerfile
     ports:
       - '3000:3000'
-    volumes:
-      - .:/usr/src/app
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/bmx-stack
-      - PORT=3000
+    env_file:
+      - .env
     depends_on:
       - mongo
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+        - action: sync+restart
+          path: ./public
+          target: /usr/src/app/public
     restart: always
+    command: bun run dev
 
   mongo:
     image: mongo

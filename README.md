@@ -10,10 +10,12 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
 
 - **🛠️ REST Route Generator**: Automate the creation of models, controllers, and routes for REST APIs with built-in validation.
 - **📄 Static Route Generator**: Quickly scaffold HTML pages and serve them with Express.
+- **🖼️ Handlebars Support**: Dynamically render HTML templates using Handlebars for robust server-side rendering.
 - **🚀 Fast Runtime**: Powered by Bun for unparalleled speed and performance.
 - **💾 MongoDB Integration**: Effortless database connectivity and schema management with Mongoose.
 - **📜 TypeScript Support**: Type-safe development for smoother rides.
-- **📦 Docker Support**: Easily containerize your application with the provided Dockerfile and Docker Compose setup.
+- **📦 Docker Support**: Easily containerize your application using the provided Dockerfile and Docker Compose setup.
+- **📈 Production Optimization**: Build highly optimized production-ready Docker images.
 
 ---
 
@@ -23,7 +25,7 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
 
 - **[Bun](https://bun.sh/)** installed
 - **MongoDB** instance (local or cloud)
-- **Docker** (optional, for containerization)
+- **Docker** (super recommended for ease of setup and production builds)
 
 ---
 
@@ -47,8 +49,9 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
    Create a `.env` file in the root directory and configure the following:
 
    ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/bmx_stack
+   PORT=3000
+   MONGO_URI=mongodb://mongo:27017/bmx-stack
+   NODE_ENV=development
    ```
 
 4. **Run the Project**
@@ -56,10 +59,10 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
    Start the development server:
 
    ```bash
-   bun run dev
+   docker compose up --watch
    ```
 
-   The server will start on `http://localhost:5000`.
+   The server will start on `http://localhost:3000`.
 
 ---
 
@@ -67,28 +70,42 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
 
 ```
 bmx-stack/
-├── Dockerfile                # Docker configuration
+├── Dockerfile                # Production-ready Docker configuration
 ├── bun.lockb                 # Bun lock file
+├── dev.Dockerfile            # Docker configuration for development
 ├── docker-compose.yaml       # Docker Compose setup
-├── generate.ts               # Route and model generation script
-├── package.json              # Project dependencies and scripts
-├── public/                   # Static HTML files
+├── public/                   # Static HTML files and assets
+├── scripts/                  # Utility scripts
+│   ├── build.sh              # Production build script
+│   ├── generate.ts           # Route and model generation script
+│   └── generateStaticRoutes.ts # Static route generator script
 ├── src/                      # Application source code
 │   ├── app.ts                # Express app setup
 │   ├── config/               # Database configuration
 │   │   └── database.ts
 │   ├── controllers/          # Route controllers
+│   │   └── healthController.ts
 │   ├── middleware/           # Custom middleware
 │   │   └── validationMiddleware.ts
 │   ├── models/               # Mongoose models
 │   ├── routes/               # API and static routes
+│   │   └── healthRoute.ts
+│   ├── routesLoader.ts       # Dynamic route loader
 │   ├── server.ts             # Server entry point
-│   └── validations/          # Reusable validation functions
-│       ├── boolean.ts
-│       ├── date.ts
-│       ├── email.ts
-│       ├── number.ts
-│       └── string.ts
+│   ├── validations/          # Reusable validation functions
+│   │   ├── boolean.ts
+│   │   ├── date.ts
+│   │   ├── email.ts
+│   │   ├── number.ts
+│   │   ├── objectId.ts
+│   │   └── string.ts
+│   └── views/                # Handlebars templates
+│       ├── home.handlebars   # Main page template
+│       ├── layouts/          # Handlebars layouts
+│       │   └── main.handlebars
+│       └── partials/         # Handlebars partials
+│           ├── footer.handlebars
+│           └── header.handlebars
 └── tsconfig.json             # TypeScript configuration
 ```
 
@@ -129,44 +146,39 @@ bun run generate
 
 ---
 
-## **Running with Docker**
+### Handlebars Support
 
-1. **Build the Docker Image**
+Handlebars templates are located in the `src/views/` directory, with support for layouts and partials.
 
-   ```bash
-   docker-compose build
-   ```
+#### Example Usage:
+Render a Handlebars template in your route:
+```typescript
+res.render('home', { title: 'Welcome!', message: 'Hello, Handlebars!' });
+```
 
-2. **Start the Application**
-   ```bash
-   docker-compose up
-   ```
-
-The application will be accessible on `http://localhost:5000`.
+Use the `main` layout (`layouts/main.handlebars`) and include reusable partials (e.g., `partials/header.handlebars`).
 
 ---
 
-## **API Endpoints**
+## **Production Optimization**
 
-### Example: User Resource
+The `build.sh` script prepares your project for production by:
+- Compiling the application using **Bun**.
+- Minifying JavaScript and CSS assets.
+- Copying the necessary files to a `dist` directory.
 
-| Method | Endpoint         | Description             | Body Requirements  |
-| ------ | ---------------- | ----------------------- | ------------------ |
-| GET    | `/api/users`     | Get all users           | None               |
-| GET    | `/api/users/:id` | Get a single user by ID | None               |
-| POST   | `/api/users`     | Create a new user       | `{ name: string }` |
-| PUT    | `/api/users/:id` | Update a user by ID     | `{ name: string }` |
-| DELETE | `/api/users/:id` | Delete a user by ID     | None               |
+### Steps to Build a Production Image
+1. Build the Docker image:
+   ```bash
+   docker build . -t image:tag
+   ```
 
----
+2. Run the container:
+   ```bash
+   docker run -p 3000:3000 image:tag
+   ```
 
-## **Scripts**
-
-| Command             | Description                           |
-| ------------------- | ------------------------------------- |
-| `bun run dev`       | Start the development server          |
-| `bun run generate`  | Generate a new route (REST or static) |
-| `docker-compose up` | Start the app in Docker containers    |
+The resulting image is optimized for production.
 
 ---
 
