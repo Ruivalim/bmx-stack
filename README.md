@@ -31,20 +31,14 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
 
 ### Installation
 
-1. **Clone the Repository**
+1. **Create Project with Bun Create**
 
    ```bash
-   git clone https://github.com/Ruivalim/bmx-stack.git
-   cd bmx-stack
+   bun create https://github.com/Ruivalim/bmx-stack ./myproj
+   cd ./myproj
    ```
 
-2. **Install Dependencies**
-
-   ```bash
-   bun install
-   ```
-
-3. **Set Up Environment Variables**
+2. **Set Up Environment Variables**
 
    Create a `.env` file in the root directory and configure the following:
 
@@ -54,7 +48,7 @@ This modern boilerplate combines **Bun**, **Mongoose**, **Express**, and **TypeS
    NODE_ENV=development
    ```
 
-4. **Run the Project**
+3. **Run the Project**
 
    Start the development server:
 
