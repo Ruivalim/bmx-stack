@@ -1,28 +1,49 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: dev.Dockerfile
+      cache_from:
+        - oven/bun:latest
     ports:
       - '3000:3000'
-    env_file:
-      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
-      - mongo
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-        - action: sync+restart
-          path: ./public
-          target: /usr/src/app/public
-    restart: always
-    command: bun run dev
+      mongo:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/bmx-stack-development
+      - PORT=3000
+    restart: unless-stopped
+    command: bun --watch run dev
 
   mongo:
     image: mongo
-    restart: always
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
     volumes:
       - ./mongo-data:/data/db
+    command: mongod --logpath /dev/null --setParameter logLevel=0
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - '8081:8081'
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_BASICAUTH_USERNAME=dev
+      - ME_CONFIG_BASICAUTH_PASSWORD=dev
+    depends_on:
+      mongo:
+        condition: service_healthy
